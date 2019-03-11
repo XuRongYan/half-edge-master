@@ -9,6 +9,12 @@
 
 namespace trimesh_type {                //命名空间三角网格
     typedef long index_t;
+
+    struct point_t {
+        index_t index;
+        float x, y, z;
+    };
+
     struct edge_t {                     //三角网格中的边
         index_t v[2];                   //存储两个顶点
         index_t& start() {
@@ -25,18 +31,15 @@ namespace trimesh_type {                //命名空间三角网格
     };
 
     struct triangle_t {                 //三角形
-        index_t v[3];                   //三角形三个顶点
-        const index_t & i() const {
+        point_t v[3];                   //三角形三个顶点
+        const point_t& i() const {
             return v[0];
         }
-        const index_t & j() const {
+        const point_t& j() const {
             return v[1];
         }
-        const index_t& k() const {
+        const point_t& k() const {
             return v[2];
-        }
-        triangle_t() {
-            v[0] = v[1] = v[2] = -1;
         }
     };
 }

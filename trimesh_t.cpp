@@ -3,11 +3,11 @@
 //
 
 #include "trimesh_t.h"
-
 #include <cassert>
 #include <set>
 #include <iostream>
 #include <algorithm>
+
 using namespace std;
 namespace {
     typedef map<pair<index_t, index_t >, index_t > directedEdge2indexMap_t;
@@ -28,9 +28,9 @@ namespace trimesh {
         typedef set<pair<index_t , index_t > > edgeSet_t;
         edgeSet_t edges;
         for (int t = 0; t < numTriangles; ++t) {
-            edges.insert(make_pair(min(triangles[t].i(), triangles[t].j()), max(triangles[t].i(), triangles[t].j())));
-            edges.insert(make_pair(min(triangles[t].j(), triangles[t].k()), max(triangles[t].j(), triangles[t].k())));
-            edges.insert(make_pair(min(triangles[t].k(), triangles[t].i()), max(triangles[t].k(), triangles[t].i())));
+            edges.insert(make_pair(min(triangles[t].i().index, triangles[t].j().index), max(triangles[t].i().index, triangles[t].j().index)));
+            edges.insert(make_pair(min(triangles[t].j().index, triangles[t].k().index), max(triangles[t].j().index, triangles[t].k().index)));
+            edges.insert(make_pair(min(triangles[t].k().index, triangles[t].i().index), max(triangles[t].k().index, triangles[t].i().index)));
         }
         edgesOut.resize(edges.size());
         int e = 0;
@@ -40,6 +40,7 @@ namespace trimesh {
         }
     }
     /**
+     * 引用
      * 建立triangle mesh
      * @param numVertices   顶点的个数
      * @param numTriangles  三角形的个数
@@ -47,26 +48,28 @@ namespace trimesh {
      * @param numEdges      边的个数
      * @param edges         存储边的数组
      */
-    void trimesh::trimesh_t::build(size_t numVertices, size_t numTriangles, const triangle_t *triangles, size_t numEdges,
-                                   const edge_t* edges) {
-        assert(triangles);
-        assert(edges);
+    void trimesh::trimesh_t::build(const vector<point_t >& points, const vector<edge_t>& edges, const vector<triangle_t>& triangles) {
         //有向边到面的映射
         directedEdge2indexMap_t de2fi;
-        for (int fi = 0; fi < numTriangles; ++fi) {
+        for (int fi = 0; fi < triangles.size(); ++fi) {
             const triangle_t& tri = triangles[fi];
-            de2fi[make_pair(tri.v[0], tri.v[1])] = fi;
-            de2fi[make_pair(tri.v[1], tri.v[2])] = fi;
-            de2fi[make_pair(tri.v[2], tri.v[0])] = fi;
+            de2fi[make_pair(tri.v[0].index, tri.v[1].index)] = fi;
+            de2fi[make_pair(tri.v[1].index, tri.v[2].index)] = fi;
+            de2fi[make_pair(tri.v[2].index, tri.v[0].index)] = fi;
         }
         clear();
-        mVertexHalfEdges.resize(numVertices, -1);
-        mFaceHalfEdges.resize(numTriangles, -1);
-        mEdgeHalfEdges.resize(numEdges, -1);
+        mPoints.resize(points.size());
+        mVertexHalfEdges.resize(points.size(), -1);
+        mFaceHalfEdges.resize(triangles.size(), -1);
+        mEdgeHalfEdges.resize(edges.size(), -1);
         //由于是半边，需要申请两倍的边空间
-        mHalfEdges.reserve(numEdges * 2);
+        mHalfEdges.reserve(edges.size() * 2);
 
-        for (int ei = 0; ei < numEdges; ++ei) {
+        for (int i = 0; i < points.size(); ++i) {
+            mPoints[i] = points[i];
+        }
+
+        for (int ei = 0; ei < edges.size(); ++ei) {
             const edge_t& edge = edges[ei];
             //把一条边分为两个有向的半边
             const index_t he0index = mHalfEdges.size();
@@ -115,7 +118,7 @@ namespace trimesh {
         }
 
         vector<index_t > boundaryHeis;
-        for (int hei = 0; hei < mHalfEdges.size(); ++hei) {
+        for (index_t hei = 0; hei < mHalfEdges.size(); ++hei) {
             //标记边界
             halfedge_t& he = mHalfEdges[hei];
             if(he.face == -1) {
@@ -126,9 +129,9 @@ namespace trimesh {
             const triangle_t& face = triangles[he.face];
             const index_t i = he.toVertex;
             index_t j = -1;
-            if (face.v[0] == i) j = face.v[1];
-            else if (face.v[1] == i) j = face.v[2];
-            else if (face.v[2] == i) j = face.v[0];
+            if (face.v[0].index == i) j = face.v[1].index;
+            else if (face.v[1].index == i) j = face.v[2].index;
+            else if (face.v[2].index == i) j = face.v[0].index;
             assert(j != -1);
             he.nextHe = mDirectedEdge2heIndex[make_pair(i, j)];
         }
@@ -160,28 +163,35 @@ namespace trimesh {
             }
         #endif
     }
-
-    vector<index_t> trimesh::trimesh_t::boundaryVertices() const {
+    /**
+     *
+     * @return 返回边界点集
+     */
+     int trimesh::trimesh_t::boundaryVertices(vector<index_t>& v) const {
         set<index_t > result;
-        for (int hei = 0; hei < mHalfEdges.size(); ++hei) {
+        v.clear();
+        for (index_t hei = 0; hei < mHalfEdges.size(); ++hei) {
             const halfedge_t& he = mHalfEdges[hei];
             if (he.face == -1) {
                 result.insert(he.toVertex);
                 result.insert(mHalfEdges[he.oppositeHe].toVertex);
             }
         }
-        return vector<index_t >(result.begin(), result.end());
+        v = vector<index_t >(result.begin(), result.end());
+        return 0;
     }
 
-    vector<pair<index_t, index_t> > trimesh::trimesh_t::boundaryEdges() const {
-        vector<pair<index_t , index_t > > result;
-        for (int hei = 0; hei < mHalfEdges.size(); ++hei) {
-            const halfedge_t& he = mHalfEdges[hei];
-            if (he.face == -1) {
-                result.push_back(heIndex2directdEdge(hei));
-            }
+    int trimesh::trimesh_t::boundaryEdges(vector<pair<index_t , index_t > >& result) {
+        result.clear();
+        index_t flag = 0, temp;
+        while (mHalfEdges[flag].face != -1 && flag <mHalfEdges.size()) flag++;
+        result.push_back(heIndex2directdEdge(flag));
+        temp = mHalfEdges[flag].nextHe;
+        while (temp != flag) {
+            result.push_back(heIndex2directdEdge(temp));
+            temp = mHalfEdges[temp].nextHe;
         }
-        return result;
+        return 0;
     }
 }
 

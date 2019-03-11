@@ -45,7 +45,7 @@ public:
     * @param numEdges
     * @param edges
     */
-    void build(size_t numVertices, size_t numTriangles, const triangle_t* triangles, size_t numEdges, const edge_t* edges);
+    void build(const vector<point_t >& points, const vector<edge_t>& edges, const vector<triangle_t>& triangles);
 
     /**
      * 清空
@@ -149,20 +149,12 @@ public:
         return result;
     }
 
-    /**
-     * 判断顶点是否在边界上
-     * @param vertexIndex
-     * @return
-     */
-    bool vertexIsBoundary(const index_t vertexIndex) const {
-        return mHalfEdges[mVertexHalfEdges[vertexIndex]].face == -1;
-    }
+     int boundaryVertices(vector<index_t >& v) const;
 
-    vector<index_t > boundaryVertices() const;
-
-    vector<pair<index_t , index_t > > boundaryEdges() const;
+    int boundaryEdges(vector<pair<index_t , index_t > >& result);
 
 private:
+    vector<point_t> mPoints;
     vector<halfedge_t> mHalfEdges;
     vector<index_t > mVertexHalfEdges;
     vector<index_t > mFaceHalfEdges;
