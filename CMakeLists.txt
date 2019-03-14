@@ -3,4 +3,4 @@ project(HalfEdge)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(HalfEdge main.cpp tramesh_types.h trimesh_t.cpp trimesh_t.h vtk.h)
+add_executable(HalfEdge main.cpp tramesh_types.h trimesh_t.cpp trimesh_t.h vtk.h data_io.h)

@@ -24,10 +24,10 @@ namespace {
 }
 
 namespace trimesh {
-    void unorderedEdgesFromTriangles(size_t numTriangles, const triangle_t *triangles, vector<edge_t> &edgesOut) {
+    void unorderedEdgesFromTriangles(const vector<triangle_t> &triangles, vector<edge_t> &edgesOut) {
         typedef set<pair<index_t , index_t > > edgeSet_t;
         edgeSet_t edges;
-        for (int t = 0; t < numTriangles; ++t) {
+        for (int t = 0; t < triangles.size(); ++t) {
             edges.insert(make_pair(min(triangles[t].i().index, triangles[t].j().index), max(triangles[t].i().index, triangles[t].j().index)));
             edges.insert(make_pair(min(triangles[t].j().index, triangles[t].k().index), max(triangles[t].j().index, triangles[t].k().index)));
             edges.insert(make_pair(min(triangles[t].k().index, triangles[t].i().index), max(triangles[t].k().index, triangles[t].i().index)));
@@ -58,16 +58,13 @@ namespace trimesh {
             de2fi[make_pair(tri.v[2].index, tri.v[0].index)] = fi;
         }
         clear();
-        mPoints.resize(points.size());
+        mTriangles = triangles;
+        mPoints = points;
         mVertexHalfEdges.resize(points.size(), -1);
         mFaceHalfEdges.resize(triangles.size(), -1);
         mEdgeHalfEdges.resize(edges.size(), -1);
         //由于是半边，需要申请两倍的边空间
         mHalfEdges.reserve(edges.size() * 2);
-
-        for (int i = 0; i < points.size(); ++i) {
-            mPoints[i] = points[i];
-        }
 
         for (int ei = 0; ei < edges.size(); ++ei) {
             const edge_t& edge = edges[ei];
@@ -103,7 +100,7 @@ namespace trimesh {
                 //就把当前halfEdge的对边赋值给他
                 mVertexHalfEdges[he0.toVertex] = he0.oppositeHe;
             }
-            if(mVertexHalfEdges[he1.toVertex] == -1 || he1.face == -1) {
+            if(mVertexHalfEdges[he1.toVertex] == -1 || he0.face == -1) {
                 mVertexHalfEdges[he1.toVertex] = he1.oppositeHe;
             }
             //面对halfEdge的索引
@@ -159,6 +156,9 @@ namespace trimesh {
         }
         #ifndef NDEBUG
             for (auto it = vertex2outgoingBoundaryHei.begin(); it != vertex2outgoingBoundaryHei.end(); it++) {
+                if(!it->second.empty()) {
+                    cout << it->first << ":" << it->second.size();
+                }
                 assert(it->second.empty());
             }
         #endif
@@ -184,7 +184,9 @@ namespace trimesh {
     int trimesh::trimesh_t::boundaryEdges(vector<pair<index_t , index_t > >& result) {
         result.clear();
         index_t flag = 0, temp;
-        while (mHalfEdges[flag].face != -1 && flag <mHalfEdges.size()) flag++;
+        while (mHalfEdges[flag].face != -1 && flag < mHalfEdges.size()){
+            flag++;
+        }
         result.push_back(heIndex2directdEdge(flag));
         temp = mHalfEdges[flag].nextHe;
         while (temp != flag) {
@@ -192,6 +194,30 @@ namespace trimesh {
             temp = mHalfEdges[temp].nextHe;
         }
         return 0;
+    }
+
+    const vector<point_t> &trimesh_t::getMPoints() const {
+        return mPoints;
+    }
+
+    const vector<trimesh_t::halfedge_t> &trimesh_t::getMHalfEdges() const {
+        return mHalfEdges;
+    }
+
+    const vector<index_t> &trimesh_t::getMVertexHalfEdges() const {
+        return mVertexHalfEdges;
+    }
+
+    const vector<index_t> &trimesh_t::getMFaceHalfEdges() const {
+        return mFaceHalfEdges;
+    }
+
+    const vector<index_t> &trimesh_t::getMEdgeHalfEdges() const {
+        return mEdgeHalfEdges;
+    }
+
+    const vector<triangle_t> &trimesh_t::getMTriangles() const {
+        return mTriangles;
     }
 }
 

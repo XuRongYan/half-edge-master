@@ -2,6 +2,8 @@
 // Created by Administrator on 2019/3/6 0006.
 //
 
+#include <vector>
+
 #ifndef HALFEDGE_TRAMESH_H
 #define HALFEDGE_TRAMESH_H
 

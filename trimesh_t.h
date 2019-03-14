@@ -18,7 +18,7 @@ namespace trimesh {
      * @param triangles
      * @param edgesOut
      */
-    void unorderedEdgesFromTriangles(size_t numTriangles, const triangle_t* triangles, vector<edge_t>& edgesOut);
+    void unorderedEdgesFromTriangles(const vector<triangle_t>& triangles, vector<edge_t>& edgesOut);
 class trimesh_t {
 public:
     typedef long index_t;
@@ -153,8 +153,37 @@ public:
 
     int boundaryEdges(vector<pair<index_t , index_t > >& result);
 
+    const index_t getPointSize() const {
+        return static_cast<const index_t>(mPoints.size());
+    }
+
+    const index_t getHalfEdgeSize() const {
+        return static_cast<const index_t>(mHalfEdges.size());
+    }
+
+    const index_t getFaceSize() const {
+        return static_cast<const index_t>(mFaceHalfEdges.size());
+    }
+
+    const index_t getEdgeSize() const {
+        return static_cast<const index_t>(mEdgeHalfEdges.size());
+    }
+
+    const vector<point_t> &getMPoints() const;
+
+    const vector<halfedge_t> &getMHalfEdges() const;
+
+    const vector<index_t> &getMVertexHalfEdges() const;
+
+    const vector<index_t> &getMFaceHalfEdges() const;
+
+    const vector<index_t> &getMEdgeHalfEdges() const;
+
+    const vector<triangle_t> &getMTriangles() const;
+
 private:
     vector<point_t> mPoints;
+    vector<triangle_t> mTriangles;
     vector<halfedge_t> mHalfEdges;
     vector<index_t > mVertexHalfEdges;
     vector<index_t > mFaceHalfEdges;
