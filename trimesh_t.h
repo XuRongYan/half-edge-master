@@ -2,6 +2,7 @@
 // Created by Administrator on 2019/3/6 0006.
 //
 #ifndef HALFEDGE_TRIMESH_H
+#include <iostream>
 #define HALFEDGE_TRIMESH_H
 #include "tramesh_types.h"                                  //提供triangle和edge
 #include <utility>
@@ -18,7 +19,7 @@ namespace trimesh {
      * @param triangles
      * @param edgesOut
      */
-    void unorderedEdgesFromTriangles(const vector<triangle_t>& triangles, vector<edge_t>& edgesOut);
+    int unorderedEdgesFromTriangles(const vector<triangle_t>& triangles, vector<edge_t>& edgesOut);
 class trimesh_t {
 public:
     typedef long index_t;
@@ -45,17 +46,18 @@ public:
     * @param numEdges
     * @param edges
     */
-    void build(const vector<point_t >& points, const vector<edge_t>& edges, const vector<triangle_t>& triangles);
+    int build(const vector<point_t >& points, const vector<edge_t>& edges, const vector<triangle_t>& triangles);
 
     /**
      * 清空
      */
-    void clear() {
+    int clear() {
         mHalfEdges.clear();
         mVertexHalfEdges.clear();
         mFaceHalfEdges.clear();
         mEdgeHalfEdges.clear();
         mDirectedEdge2heIndex.clear();
+        return 0;
     }
 
     const halfedge_t& halfedge(const index_t i) const {
@@ -82,7 +84,7 @@ public:
      * @param vertexIndex
      * @param result
      */
-    void vvNeighbors(const index_t vertexIndex, vector<index_t >& result) const {
+    int vvNeighbors(const index_t vertexIndex, vector<index_t >& result) const {
         result.clear();
         const index_t startHei = mVertexHalfEdges[vertexIndex];
         index_t hei = startHei;
@@ -92,6 +94,7 @@ public:
             hei = he.prev;
             if(hei == startHei) break;
         }
+        return 0;
     }
 
     vector<index_t > vvNeighbors(const index_t vertexIndex) const {
@@ -113,7 +116,7 @@ public:
      * @param vertexIndex
      * @param 在result中以索引形式返回面邻居
      */
-    void vfNeighbors(const index_t vertexIndex, vector<index_t >& result) const {
+    int vfNeighbors(const index_t vertexIndex, vector<index_t >& result) const {
         result.clear();
         const index_t startHei = mVertexHalfEdges[vertexIndex];
         index_t hei = startHei;
@@ -123,6 +126,7 @@ public:
             hei = he.prev;
             if (hei == startHei) break;
         }
+        return 0;
     }
 
     vector<index_t > vfNeighbors(const index_t vertexIndex) const {
@@ -131,16 +135,20 @@ public:
         return result;
     }
 
-    void efNeighbors(const index_t vi, const index_t vj, vector<index_t >& result) {
+    int efNeighbors(const index_t vi, const index_t vj, vector<index_t >& result) {
         index_t v = -1;
         if(mDirectedEdge2heIndex.find(make_pair(vi, vj)) != mDirectedEdge2heIndex.end()) {
             v = mHalfEdges[mHalfEdges[mDirectedEdge2heIndex[make_pair(vi, vj)]].oppositeHe].toVertex;
         } else if (mDirectedEdge2heIndex.find(make_pair(vj, vi)) != mDirectedEdge2heIndex.end()) {
             v = mHalfEdges[mHalfEdges[mDirectedEdge2heIndex[make_pair(vj, vi)]].oppositeHe].toVertex;
         }
-        assert(v != -1);
+        if(v == -1) {
+            cout << "this edge does not exist" << endl;
+            return -1;
+        }
         result.clear();
         vfNeighbors(v, result);
+        return 0;
     }
 
     vector<index_t > efNeighbors(const index_t vi, const index_t vj) {

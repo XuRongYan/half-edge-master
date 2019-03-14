@@ -12,11 +12,18 @@ using namespace std;
 namespace {
     typedef map<pair<index_t, index_t >, index_t > directedEdge2indexMap_t;
     index_t directedEdge2faceIndex(const directedEdge2indexMap_t& de2fi, index_t vi, index_t vj) {
-        assert(!de2fi.empty());
+        if (de2fi.empty()) {
+            cout << "fail to build mesh: de2fi == empty()" << endl;
+            return -1;
+        }
         auto it = de2fi.find(make_pair(vi, vj));
         //没有对应面的he返回-1
         if(it == de2fi.end()) {
-            assert(de2fi.find(make_pair(vj, vi)) != de2fi.end());
+            if (de2fi.find(make_pair(vj, vi)) == de2fi.end()) {
+                cout << "fail to build mesh: de2fi.find(make_pair(vj, vi)) == de2fi.end()" << endl;
+                return -1;
+            }
+            cout << "fail to build mesh: it == de2fi.end()" << endl;
             return -1;
         }
         return it->second;
@@ -24,10 +31,10 @@ namespace {
 }
 
 namespace trimesh {
-    void unorderedEdgesFromTriangles(const vector<triangle_t> &triangles, vector<edge_t> &edgesOut) {
+    int unorderedEdgesFromTriangles(const vector<triangle_t> &triangles, vector<edge_t> &edgesOut) {
         typedef set<pair<index_t , index_t > > edgeSet_t;
         edgeSet_t edges;
-        for (int t = 0; t < triangles.size(); ++t) {
+        for (index_t t = 0; t < triangles.size(); ++t) {
             edges.insert(make_pair(min(triangles[t].i().index, triangles[t].j().index), max(triangles[t].i().index, triangles[t].j().index)));
             edges.insert(make_pair(min(triangles[t].j().index, triangles[t].k().index), max(triangles[t].j().index, triangles[t].k().index)));
             edges.insert(make_pair(min(triangles[t].k().index, triangles[t].i().index), max(triangles[t].k().index, triangles[t].i().index)));
@@ -38,6 +45,7 @@ namespace trimesh {
             edgesOut.at(static_cast<unsigned long long int>(e)).start() = it->first;
             edgesOut.at(static_cast<unsigned long long int>(e)).end() = it->second;
         }
+        return 0;
     }
     /**
      * 引用
@@ -48,7 +56,7 @@ namespace trimesh {
      * @param numEdges      边的个数
      * @param edges         存储边的数组
      */
-    void trimesh::trimesh_t::build(const vector<point_t >& points, const vector<edge_t>& edges, const vector<triangle_t>& triangles) {
+    int trimesh::trimesh_t::build(const vector<point_t >& points, const vector<edge_t>& edges, const vector<triangle_t>& triangles) {
         //有向边到面的映射
         directedEdge2indexMap_t de2fi;
         for (int fi = 0; fi < triangles.size(); ++fi) {
@@ -90,8 +98,14 @@ namespace trimesh {
             he0.oppositeHe = he1index;
             he1.oppositeHe = he0index;
 
-            assert(mDirectedEdge2heIndex.find(make_pair(edge.v[0], edge.v[1])) == mDirectedEdge2heIndex.end());
-            assert(mDirectedEdge2heIndex.find(make_pair(edge.v[1], edge.v[0])) == mDirectedEdge2heIndex.end());
+            if (mDirectedEdge2heIndex.find(make_pair(edge.v[0], edge.v[1])) != mDirectedEdge2heIndex.end()) {
+                cout << "fail to build mesh: mDirectedEdge2heIndex.find(make_pair(edge.v[0], edge.v[1])) != mDirectedEdge2heIndex.end()" << endl;
+                return -1;
+            }
+            if (mDirectedEdge2heIndex.find(make_pair(edge.v[1], edge.v[0])) != mDirectedEdge2heIndex.end()) {
+                cout << "fail to build mesh: mDirectedEdge2heIndex.find(make_pair(edge.v[1], edge.v[0])) != mDirectedEdge2heIndex.end()" << endl;
+                return -1;
+            }
             //根据有向边可以寻找到对应的halfEdge
             mDirectedEdge2heIndex[make_pair(edge.v[0], edge.v[1])] = he0index;
             mDirectedEdge2heIndex[make_pair(edge.v[1], edge.v[0])] = he1index;
@@ -110,7 +124,10 @@ namespace trimesh {
             if(he1.face != -1 && mFaceHalfEdges[he1.face] == -1) {
                 mFaceHalfEdges[he1.face] = he1index;
             }
-            assert(mEdgeHalfEdges[ei] == -1);
+            if(mEdgeHalfEdges[ei] != -1) {
+                cout << "fail to build mesh: mEdgeHalfEdges[ei] != -1" << endl;
+                return -1;
+            }
             mEdgeHalfEdges[ei] = he0index;
         }
 
@@ -129,7 +146,10 @@ namespace trimesh {
             if (face.v[0].index == i) j = face.v[1].index;
             else if (face.v[1].index == i) j = face.v[2].index;
             else if (face.v[2].index == i) j = face.v[0].index;
-            assert(j != -1);
+            if(j == -1) {
+                cout << "fail to build mesh: Caused by next halfEdge not found exception" << endl;
+                return -1;
+            }
             he.nextHe = mDirectedEdge2heIndex[make_pair(i, j)];
         }
         //对于边界的he，将整个边界路径找到
@@ -157,11 +177,12 @@ namespace trimesh {
         #ifndef NDEBUG
             for (auto it = vertex2outgoingBoundaryHei.begin(); it != vertex2outgoingBoundaryHei.end(); it++) {
                 if(!it->second.empty()) {
-                    cout << it->first << ":" << it->second.size();
+                    cout << "fail to build mesh: Caused by border redundant" << endl;
+                    return -1;
                 }
-                assert(it->second.empty());
             }
         #endif
+        return 0;
     }
     /**
      *
@@ -186,6 +207,10 @@ namespace trimesh {
         index_t flag = 0, temp;
         while (mHalfEdges[flag].face != -1 && flag < mHalfEdges.size()){
             flag++;
+        }
+        if (flag >= mHalfEdges.size()) {
+            cout << "no boundary have been found" << endl;
+            return -1;
         }
         result.push_back(heIndex2directdEdge(flag));
         temp = mHalfEdges[flag].nextHe;
