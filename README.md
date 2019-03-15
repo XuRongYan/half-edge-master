@@ -1,2 +1,2 @@
 # half-edge-master
-an half-edge implementation
+a half-edge implementation
