@@ -23,7 +23,6 @@ namespace {
                 cout << "fail to build mesh: de2fi.find(make_pair(vj, vi)) == de2fi.end()" << endl;
                 return -1;
             }
-            cout << "fail to build mesh: it == de2fi.end()" << endl;
             return -1;
         }
         return it->second;
@@ -174,18 +173,18 @@ namespace trimesh {
             halfedge_t& he = *it;
             he.prev = mHalfEdges[he.oppositeHe].nextHe;
         }
-        #ifndef NDEBUG
-            for (auto it = vertex2outgoingBoundaryHei.begin(); it != vertex2outgoingBoundaryHei.end(); it++) {
-                if(!it->second.empty()) {
-                    cout << "fail to build mesh: Caused by border redundant" << endl;
-                    return -1;
-                }
+
+        for (auto it = vertex2outgoingBoundaryHei.begin(); it != vertex2outgoingBoundaryHei.end(); it++) {
+            if(!it->second.empty()) {
+                cout << "fail to build mesh: Caused by border redundant" << endl;
+                return -1;
             }
-        #endif
+        }
+        cout << "successfully built the mesh" << endl;
         return 0;
     }
     /**
-     *
+     * 找出边界上的所有顶点
      * @return 返回边界点集
      */
      int trimesh::trimesh_t::boundaryVertices(vector<index_t>& v) const {
@@ -201,7 +200,11 @@ namespace trimesh {
         v = vector<index_t >(result.begin(), result.end());
         return 0;
     }
-
+    /**
+     * 找出边界
+     * @param result
+     * @return
+     */
     int trimesh::trimesh_t::boundaryEdges(vector<pair<index_t , index_t > >& result) {
         result.clear();
         index_t flag = 0, temp;
@@ -215,6 +218,7 @@ namespace trimesh {
         result.push_back(heIndex2directdEdge(flag));
         temp = mHalfEdges[flag].nextHe;
         while (temp != flag) {
+            //找到一条边界以后就不断地next获取其余边界
             result.push_back(heIndex2directdEdge(temp));
             temp = mHalfEdges[temp].nextHe;
         }

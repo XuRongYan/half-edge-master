@@ -10,7 +10,7 @@ using namespace std;
 
 int main() {
     string path = "mesh.vtk";
-    ifstream is("torus.obj");
+    ifstream is("tritest.obj");
     if (!is.is_open()) {
         cout << "fail to open the file" << endl;
         return -1;
@@ -31,7 +31,10 @@ int main() {
     mesh.boundaryEdges(boundary);
     cout << "boundary:";
     for (index_t i = 0; i < boundary.size(); ++i) {
-        cout << boundary[i].first << "->" << boundary[i].second << endl;
+        if(i == 0)
+            cout << boundary[i].first << "->" << boundary[i].second;
+        else
+            cout << "->" << boundary[i].second;
     }
     cout << "\n";
     vector<index_t > faceNeighbors = mesh.vfNeighbors(0);

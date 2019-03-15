@@ -1,7 +1,9 @@
 //
 // Created by Administrator on 2019/3/6 0006.
 //
-
+/**
+ * 基本数据结构
+ */
 #include <vector>
 
 #ifndef HALFEDGE_TRAMESH_H

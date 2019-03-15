@@ -1,6 +1,9 @@
 //
 // Created by Administrator on 2019/3/6 0006.
 //
+/**
+ * mesh类
+ */
 #ifndef HALFEDGE_TRIMESH_H
 #include <iostream>
 #define HALFEDGE_TRIMESH_H
@@ -112,7 +115,7 @@ public:
     }
 
     /**
-     *
+     * 返回与给定顶点接壤的面的索引
      * @param vertexIndex
      * @param 在result中以索引形式返回面邻居
      */
@@ -134,20 +137,32 @@ public:
         vfNeighbors(vertexIndex, result);
         return result;
     }
-
+    /**
+     * 给定一个边，求出与边相邻的面
+     * @param vi
+     * @param vj
+     * @param result
+     * @return
+     */
     int efNeighbors(const index_t vi, const index_t vj, vector<index_t >& result) {
-        index_t v = -1;
+        bool flag = false;
+        result.clear();
         if(mDirectedEdge2heIndex.find(make_pair(vi, vj)) != mDirectedEdge2heIndex.end()) {
-            v = mHalfEdges[mHalfEdges[mDirectedEdge2heIndex[make_pair(vi, vj)]].oppositeHe].toVertex;
-        } else if (mDirectedEdge2heIndex.find(make_pair(vj, vi)) != mDirectedEdge2heIndex.end()) {
-            v = mHalfEdges[mHalfEdges[mDirectedEdge2heIndex[make_pair(vj, vi)]].oppositeHe].toVertex;
+            if(mHalfEdges[mDirectedEdge2heIndex[make_pair(vi, vj)]].face != -1){
+                result.push_back(mHalfEdges[mDirectedEdge2heIndex[make_pair(vi, vj)]].face);
+                flag = true;
+            }
         }
-        if(v == -1) {
+        if (mDirectedEdge2heIndex.find(make_pair(vj, vi)) != mDirectedEdge2heIndex.end()) {
+            if(mHalfEdges[mDirectedEdge2heIndex[make_pair(vj, vi)]].face != -1) {
+                result.push_back(mHalfEdges[mDirectedEdge2heIndex[make_pair(vj, vi)]].face);
+                flag = true;
+            }
+        }
+        if(!flag) {
             cout << "this edge does not exist" << endl;
             return -1;
         }
-        result.clear();
-        vfNeighbors(v, result);
         return 0;
     }
 
