@@ -12,6 +12,7 @@
 #include <vector>
 #include <map>
 #include <cassert>
+#include <unordered_set>
 
 using namespace trimesh_type;
 using namespace std;
@@ -27,12 +28,12 @@ class trimesh_t {
 public:
     typedef long index_t;
     struct halfedge_t {
-        index_t toVertex;
-        index_t face;
-        index_t edge;
-        index_t prev;
-        index_t oppositeHe;
-        index_t nextHe;
+        index_t toVertex;                       //半边所指向的顶点
+        index_t face;                           //半边所存储的面（若为边界，存储的面为空）
+        index_t edge;                           //所在的无向边
+        index_t prev;                           //前一个半边
+        index_t oppositeHe;                     //与自己方向相反的半边
+        index_t nextHe;                         //下一条半边（逆时针方向）
         halfedge_t() :toVertex(-1),
                     face(-1),
                     edge(-1),
@@ -89,12 +90,12 @@ public:
      */
     int vvNeighbors(const index_t vertexIndex, vector<index_t >& result) const {
         result.clear();
-        const index_t startHei = mVertexHalfEdges[vertexIndex];
+        const index_t startHei = mVertexHalfEdges[vertexIndex];                     //获取顶点所在的半边索引
         index_t hei = startHei;
         while (true) {
             const halfedge_t& he = mHalfEdges[hei];
-            result.push_back(he.toVertex);
-            hei = he.prev;
+            result.push_back(he.toVertex);                                          //半边所对的结点为一个邻居
+            hei = he.prev;                                                          //（he.opposite.toVertex）
             if(hei == startHei) break;
         }
         return 0;
@@ -121,14 +122,16 @@ public:
      */
     int vfNeighbors(const index_t vertexIndex, vector<index_t >& result) const {
         result.clear();
+        unordered_set<index_t > temp;
         const index_t startHei = mVertexHalfEdges[vertexIndex];
         index_t hei = startHei;
         while (true) {
             const halfedge_t& he = mHalfEdges[hei];
-            if(he.face != -1) result.push_back(he.face);
+            if(he.face != -1) temp.insert(he.face);
             hei = he.prev;
             if (hei == startHei) break;
         }
+        result = vector<index_t >(temp.begin(), temp.end());
         return 0;
     }
 
@@ -205,14 +208,14 @@ public:
     const vector<triangle_t> &getMTriangles() const;
 
 private:
-    vector<point_t> mPoints;
-    vector<triangle_t> mTriangles;
-    vector<halfedge_t> mHalfEdges;
-    vector<index_t > mVertexHalfEdges;
-    vector<index_t > mFaceHalfEdges;
-    vector<index_t > mEdgeHalfEdges;
+    vector<point_t> mPoints;                                                    //点集
+    vector<triangle_t> mTriangles;                                              //三角形网格集合
+    vector<halfedge_t> mHalfEdges;                                              //半边集合
+    vector<index_t > mVertexHalfEdges;                                          //根据顶点索引获取半边索引
+    vector<index_t > mFaceHalfEdges;                                            //根据面的索引获取半边索引
+    vector<index_t > mEdgeHalfEdges;                                            //根据无向边的索引获取半边的索引
     typedef map<pair<index_t, index_t>, index_t > directedEdge2indexMap_t;
-    directedEdge2indexMap_t mDirectedEdge2heIndex;
+    directedEdge2indexMap_t mDirectedEdge2heIndex;                              //根据有向边获取半边索引
 };
 }
 

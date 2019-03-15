@@ -30,8 +30,15 @@ namespace {
 }
 
 namespace trimesh {
+    /**
+     * 根据三角形网格的信息输出边的集合
+     * 没有准备边集信息时调用此函数
+     * @param triangles         三角形网格信息
+     * @param edgesOut          输出的边集
+     * @return
+     */
     int unorderedEdgesFromTriangles(const vector<triangle_t> &triangles, vector<edge_t> &edgesOut) {
-        typedef set<pair<index_t , index_t > > edgeSet_t;
+        typedef set<pair<index_t , index_t > > edgeSet_t;       //边集，防止重复建边
         edgeSet_t edges;
         for (index_t t = 0; t < triangles.size(); ++t) {
             edges.insert(make_pair(min(triangles[t].i().index, triangles[t].j().index), max(triangles[t].i().index, triangles[t].j().index)));
@@ -47,13 +54,11 @@ namespace trimesh {
         return 0;
     }
     /**
-     * 引用
-     * 建立triangle mesh
-     * @param numVertices   顶点的个数
-     * @param numTriangles  三角形的个数
-     * @param triangles     存储三角形的数组
-     * @param numEdges      边的个数
-     * @param edges         存储边的数组
+     * 建立mesh
+     * @param points    点集
+     * @param edges     边集
+     * @param triangles 三角形网格
+     * @return
      */
     int trimesh::trimesh_t::build(const vector<point_t >& points, const vector<edge_t>& edges, const vector<triangle_t>& triangles) {
         //有向边到面的映射

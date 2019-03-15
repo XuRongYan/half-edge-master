@@ -10,7 +10,7 @@ using namespace std;
 
 int main() {
     string path = "mesh.vtk";
-    ifstream is("tritest.obj");
+    ifstream is("torus.obj");
     if (!is.is_open()) {
         cout << "fail to open the file" << endl;
         return -1;

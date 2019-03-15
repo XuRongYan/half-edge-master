@@ -14,9 +14,9 @@
 namespace trimesh_type {                //命名空间三角网格
     typedef long index_t;
 
-    struct point_t {
-        index_t index;
-        float x, y, z;
+    struct point_t {                    //顶点
+        index_t index;                  //顶点的索引
+        float x, y, z;                  //顶点的坐标
     };
 
     struct edge_t {                     //三角网格中的边

@@ -38,7 +38,6 @@ int readTri(ifstream& is, trimesh_t& mesh) {
                 p.index = pcount;
                 is >> p.x >> p.y >> p.z;
                 is.get();
-                //cout << "points" << p.x << " " << p.y << " " << p.z << endl;
                 points[pcount++] = p;
                 break;
             case 'f':
@@ -46,7 +45,6 @@ int readTri(ifstream& is, trimesh_t& mesh) {
                 int x, y, z;
                 is >> x >> y >> z;
                 is.get();
-                //cout << "face:" << x << " " << y << " " << z << endl;
                 if (!(x <= points.size() && y <= points.size() && z <= points.size())) {
                     cout << "数组越界：x=" << x << "，y=" << y << "，z=" << z << endl;
                     cout << "maxSize=" << points.size() << endl;
@@ -61,11 +59,9 @@ int readTri(ifstream& is, trimesh_t& mesh) {
                 triangles[tricount++] = triangle;
                 break;
             default:
-                //getline(is, s);
                 break;
         }
     }
-    //cout << "points:" << pcount << " faces:" << tricount << endl;
     unorderedEdgesFromTriangles(triangles, edges);
     mesh.build(points, edges, triangles);
     return 0;
@@ -78,13 +74,11 @@ int writeVtk(string path, vector<point_t> points, vector<triangle_t> triangles) 
         nodes.push_back(points[i].x);
         nodes.push_back(points[i].y);
         nodes.push_back(points[i].z);
-        //cout << "points:" << points[i].x << " " << points[i].y << " " << points[i].z << endl;
     }
     for (index_t i = 0; i < triangles.size(); i++) {
         faces.push_back(triangles[i].i().index);
         faces.push_back(triangles[i].j().index);
         faces.push_back(triangles[i].k().index);
-        //cout << "faces:" << triangles[i].i().index << " " << triangles[i].j().index << " " << triangles[i].k().index << endl;
     }
     ofstream os(path.c_str());
     tri2vtk(os, &nodes[0], points.size(), &faces[0], triangles.size());
